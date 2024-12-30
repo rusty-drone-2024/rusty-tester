@@ -11,7 +11,7 @@ Create a file with the following content.
 NOTE 1: you need to replace the todo with the type of the drone to be tested.
 NOTE 2: you need to change the timing to fit your drone speed.
 ```rust
-#[cfg(test)]
+#![cfg(test)]
 use rusty_tester::*;
 use std::time::Duration;
 
