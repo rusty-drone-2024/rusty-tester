@@ -1,8 +1,8 @@
 use crate::flood::assert_topology_of_drones;
-use crate::TIMEOUT;
+use std::time::Duration;
 use wg_2024::drone::Drone;
 
-pub fn test_matrix_loop_flood<T: Drone + Send + 'static>() {
+pub fn test_matrix_loop_flood<T: Drone + 'static>(timeout: Duration) {
     assert_topology_of_drones::<T>(
         19,
         &[
@@ -33,11 +33,11 @@ pub fn test_matrix_loop_flood<T: Drone + Send + 'static>() {
             (16, 17),
             (17, 18),
         ],
-        TIMEOUT,
+        timeout,
     );
 }
 
-pub fn test_star_loop_flood<T: Drone + Send + 'static>() {
+pub fn test_star_loop_flood<T: Drone + 'static>(timeout: Duration) {
     assert_topology_of_drones::<T>(
         11,
         &[
@@ -53,11 +53,11 @@ pub fn test_star_loop_flood<T: Drone + Send + 'static>() {
             (9, 2),
             (10, 3),
         ],
-        TIMEOUT,
+        timeout,
     );
 }
 
-pub fn test_butterfly_loop_flood<T: Drone + Send + 'static>() {
+pub fn test_butterfly_loop_flood<T: Drone + 'static>(timeout: Duration) {
     assert_topology_of_drones::<T>(
         11,
         &[
@@ -76,11 +76,11 @@ pub fn test_butterfly_loop_flood<T: Drone + Send + 'static>() {
             (5, 9),
             (8, 10),
         ],
-        TIMEOUT,
+        timeout,
     );
 }
 
-pub fn test_tree_loop_flood<T: Drone + Send + 'static>() {
+pub fn test_tree_loop_flood<T: Drone + 'static>(timeout: Duration) {
     assert_topology_of_drones::<T>(
         11,
         &[
@@ -106,6 +106,6 @@ pub fn test_tree_loop_flood<T: Drone + Send + 'static>() {
             (6, 9),
             (6, 10),
         ],
-        TIMEOUT,
+        timeout,
     );
 }

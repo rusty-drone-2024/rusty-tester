@@ -17,7 +17,7 @@ pub struct NetworkDrone {
 }
 
 impl Network {
-    pub fn create_and_run<T: Drone + Send + 'static>(
+    pub fn create_and_run<T: Drone + 'static>(
         amount: usize,
         connections: &[(NodeId, NodeId)],
         client: &[NodeId],
@@ -28,7 +28,7 @@ impl Network {
     /// Create vector of drone with ID from 0 to amount
     /// With the given connections
     /// Duplicated connection are ignored and the graph is not directional
-    fn new<T: Drone + Send + 'static>(
+    fn new<T: Drone + 'static>(
         amount: usize,
         connections: &[(NodeId, NodeId)],
         client: &[NodeId],
