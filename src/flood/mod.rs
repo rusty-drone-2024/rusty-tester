@@ -18,7 +18,7 @@ pub fn assert_topology_of_drones<T: Drone + 'static>(
 ) {
     let net = Network::create_and_run::<T>(amount, topology, &[0]);
 
-    let flood = new_flood_request(5, 7, 0, false);
+    let flood = new_flood_request(5, 7, 0, true);
     net.send_to_dest_as_client(0, 1, &flood).unwrap();
 
     let result = normalize_vec(listen_response_nodes(&net, timeout));
@@ -28,7 +28,6 @@ pub fn assert_topology_of_drones<T: Drone + 'static>(
 
 pub fn listen_response_nodes(network: &Network, timeout: Duration) -> Vec<(NodeId, NodeId)> {
     let mut hash_set = HashSet::new();
-    hash_set.insert((0 as NodeId, 1 as NodeId));
 
     while let Some(packet) = network.recv_as_client(0, timeout) {
         if let PacketType::FloodResponse(ref flood_res) = packet.pack_type {

@@ -8,10 +8,10 @@ use wg_2024::packet::NodeType;
 pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(4, &[(0, 1), (1, 2), (1, 3)], &[0, 2, 3]);
 
-    let flood = new_flood_request(5, 7, 0, false);
+    let flood = new_flood_request(5, 7, 0, true);
     net.send_to_dest_as_client(0, 1, &flood).unwrap();
 
-    let expected = new_flood_request_with_path(5, 7, 0, &[(1, NodeType::Drone)]);
+    let expected = new_flood_request_with_path(5, 7, 0, &[(0, NodeType::Client), (1, NodeType::Drone)]);
     assert_eq!(expected.pack_type, net.recv_as_client(2, timeout).unwrap().pack_type);
     assert_eq!(expected.pack_type, net.recv_as_client(3, timeout).unwrap().pack_type);
 }
