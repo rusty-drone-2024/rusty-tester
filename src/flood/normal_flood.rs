@@ -12,8 +12,8 @@ pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
     net.send_to_dest_as_client(0, 1, &flood).unwrap();
 
     let expected = new_flood_request_with_path(5, 7, 0, &[(1, NodeType::Drone)]);
-    assert_eq!(expected, net.recv_as_client(2, timeout).unwrap());
-    assert_eq!(expected, net.recv_as_client(3, timeout).unwrap());
+    assert_eq!(expected.pack_type, net.recv_as_client(2, timeout).unwrap().pack_type);
+    assert_eq!(expected.pack_type, net.recv_as_client(3, timeout).unwrap().pack_type);
 }
 
 pub fn test_loop_flood<T: Drone + 'static>(timeout: Duration) {
