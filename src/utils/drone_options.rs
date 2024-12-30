@@ -15,21 +15,16 @@ pub struct DroneOptions {
     pub event_recv: Receiver<DroneEvent>,
 }
 
+impl Default for DroneOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DroneOptions {
     pub fn new() -> Self {
         let (controller_send, event_recv) = unbounded::<DroneEvent>();
-        let (command_send, controller_recv) = unbounded::<DroneCommand>();
-        let (packet_drone_in, packet_recv) = unbounded::<Packet>();
-        let packet_send = HashMap::<NodeId, Sender<Packet>>::new();
-        Self {
-            controller_send,
-            controller_recv,
-            packet_recv,
-            packet_send,
-            packet_drone_in,
-            command_send,
-            event_recv,
-        }
+        Self::new_with_sc(controller_send, event_recv)
     }
 
     pub(crate) fn new_with_sc(
@@ -50,15 +45,15 @@ impl DroneOptions {
         }
     }
 
-    pub fn create_drone<T: Drone>(&self, id: NodeId, pdr: f32) -> Box<T> {
-        Box::new(T::new(
+    pub fn create_drone<T: Drone>(&self, id: NodeId, pdr: f32) -> T {
+        T::new(
             id,
             self.controller_send.clone(),
             self.controller_recv.clone(),
             self.packet_recv.clone(),
             self.packet_send.clone(),
             pdr,
-        ))
+        )
     }
 
     pub fn assert_expect_drone_event(&self, expected_event: DroneEvent) {

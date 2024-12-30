@@ -53,7 +53,7 @@ impl Network {
             .enumerate()
             .map(|(i, options)| {
                 if !client.contains(&(i as NodeId)) {
-                    let mut drone: Box<T> = options.create_drone(i as NodeId, 0.0);
+                    let mut drone: T = options.create_drone(i as NodeId, 0.0);
 
                     thread::spawn(move || {
                         drone.run();
