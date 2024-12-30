@@ -7,7 +7,9 @@ rusty_tester = { git = "https://github.com/rusty-drone-2024/rusty-tester" }
 ```
 
 ## Using it
-Create a file with the following content (only change the Drone to test):
+Create a file with the following content.
+NOTE 1: you need to replace the todo with the type of the drone to be tested.
+NOTE 2: you need to change the timing to fit your drone speed.
 ```rust
 #[cfg(test)]
 use crate::drone::RustyDrone;
