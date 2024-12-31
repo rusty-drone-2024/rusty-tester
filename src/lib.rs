@@ -1,8 +1,7 @@
-pub mod flood;
-pub mod general;
+mod flood;
+mod general;
 pub mod utils;
 
-pub use utils::data;
-
-use std::time::Duration;
-const TIMEOUT: Duration = Duration::from_millis(50);
+pub use crate::flood::extra_flood::*;
+pub use crate::flood::normal_flood::*;
+pub use crate::general::*;
