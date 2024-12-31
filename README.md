@@ -18,7 +18,6 @@ use std::time::Duration;
 type Tested = /* TODO insert drone type to be tested (eg. RustyDrone) */;
 const TIMEOUT: Duration = Duration::from_millis(20);
 const FLOOD_TIMEOUT: Duration = Duration::from_millis(50);
-const HARD_TEST_TIMEOUT: Duration = Duration::from_millis(500);
 
 #[test]
 fn drone_destination_is_drone() {
@@ -43,11 +42,6 @@ fn drone_packet_3_hop() {
 #[test]
 fn drone_packet_3_hop_crash() {
     test_drone_packet_3_hop_crash::<Tested>(TIMEOUT);
-}
-
-#[test]
-fn drone_packet_255_hop() {
-    test_drone_packet_255_hop::<Tested>(HARD_TEST_TIMEOUT);
 }
 
 #[test]
