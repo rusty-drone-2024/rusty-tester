@@ -22,10 +22,10 @@ impl Drop for NetworkDrone {
         if !self.running {
             return;
         }
-        
+
         // Partially fix performance when running multiple integration test
         let _ = self.options.command_send.send(DroneCommand::Crash);
-        
+
         // Removing connection cause instability and does't increase performance
     }
 }
