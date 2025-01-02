@@ -13,7 +13,21 @@ pub struct Network {
 }
 
 pub struct NetworkDrone {
+    running: bool,
     options: DroneOptions,
+}
+
+impl Drop for NetworkDrone {
+    fn drop(&mut self) {
+        if !self.running {
+            return;
+        }
+        
+        // Partially fix performance when running multiple integration test
+        let _ = self.options.command_send.send(DroneCommand::Crash);
+        
+        // Removing connection cause instability and does't increase performance
+    }
 }
 
 impl Network {
@@ -52,7 +66,8 @@ impl Network {
             .into_iter()
             .enumerate()
             .map(|(i, options)| {
-                if !client.contains(&(i as NodeId)) {
+                let is_drone = !client.contains(&(i as NodeId));
+                if is_drone {
                     let mut drone: T = options.create_drone(i as NodeId, 0.0);
 
                     thread::spawn(move || {
@@ -60,7 +75,10 @@ impl Network {
                     });
                 };
 
-                NetworkDrone { options }
+                NetworkDrone {
+                    running: is_drone,
+                    options,
+                }
             })
             .collect();
 
