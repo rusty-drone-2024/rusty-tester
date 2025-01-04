@@ -1,6 +1,7 @@
 use crate::utils::DroneOptions;
 use crossbeam_channel::{unbounded, Receiver};
 use std::thread;
+use std::thread::JoinHandle;
 use std::time::Duration;
 use wg_2024::controller::{DroneCommand, DroneEvent};
 use wg_2024::drone::Drone;
@@ -13,20 +14,36 @@ pub struct Network {
 }
 
 pub struct NetworkDrone {
-    running: bool,
+    thread_handle: Option<JoinHandle<()>>,
     options: DroneOptions,
+}
+
+impl Drop for Network {
+    fn drop(&mut self) {
+        let mut threads = vec!();
+        
+        for node in self.nodes.iter_mut() {
+            if let Some(handle) = node.thread_handle.take() {
+                threads.push(handle);
+            }
+        }
+        
+        self.nodes.clear();
+        
+        for t in threads {
+            let _ = t.join();
+        }
+    }
 }
 
 impl Drop for NetworkDrone {
     fn drop(&mut self) {
-        if !self.running {
-            return;
+        for neighbour in self.options.packet_send.keys(){
+            let res = self.options.command_send.send(DroneCommand::RemoveSender(*neighbour));
+            if res.is_err() { return; }
         }
 
-        // Partially fix performance when running multiple integration test
         let _ = self.options.command_send.send(DroneCommand::Crash);
-
-        // Removing connection cause instability and does't increase performance
     }
 }
 
@@ -67,16 +84,20 @@ impl Network {
             .enumerate()
             .map(|(i, options)| {
                 let is_drone = !client.contains(&(i as NodeId));
+                let mut thread_handle = None;
+                
                 if is_drone {
                     let mut drone: T = options.create_drone(i as NodeId, 0.0);
 
-                    thread::spawn(move || {
-                        drone.run();
-                    });
+                    thread_handle = Some(
+                        thread::spawn(move || {
+                            drone.run();
+                        }
+                    ));
                 };
 
                 NetworkDrone {
-                    running: is_drone,
+                    thread_handle,
                     options,
                 }
             })
