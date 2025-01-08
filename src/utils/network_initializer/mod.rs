@@ -20,16 +20,16 @@ pub struct NetworkDrone {
 
 impl Drop for Network {
     fn drop(&mut self) {
-        let mut threads = vec!();
-        
+        let mut threads = vec![];
+
         for node in self.nodes.iter_mut() {
             if let Some(handle) = node.thread_handle.take() {
                 threads.push(handle);
             }
         }
-        
+
         self.nodes.clear();
-        
+
         for t in threads {
             let _ = t.join();
         }
@@ -38,9 +38,14 @@ impl Drop for Network {
 
 impl Drop for NetworkDrone {
     fn drop(&mut self) {
-        for neighbour in self.options.packet_send.keys(){
-            let res = self.options.command_send.send(DroneCommand::RemoveSender(*neighbour));
-            if res.is_err() { return; }
+        for neighbour in self.options.packet_send.keys() {
+            let res = self
+                .options
+                .command_send
+                .send(DroneCommand::RemoveSender(*neighbour));
+            if res.is_err() {
+                return;
+            }
         }
 
         let _ = self.options.command_send.send(DroneCommand::Crash);
@@ -85,15 +90,13 @@ impl Network {
             .map(|(i, options)| {
                 let is_drone = !client.contains(&(i as NodeId));
                 let mut thread_handle = None;
-                
+
                 if is_drone {
                     let mut drone: T = options.create_drone(i as NodeId, 0.0);
 
-                    thread_handle = Some(
-                        thread::spawn(move || {
-                            drone.run();
-                        }
-                    ));
+                    thread_handle = Some(thread::spawn(move || {
+                        drone.run();
+                    }));
                 };
 
                 NetworkDrone {
