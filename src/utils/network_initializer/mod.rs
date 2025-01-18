@@ -22,7 +22,7 @@ impl Drop for Network {
     fn drop(&mut self) {
         let mut threads = vec![];
 
-        for node in self.nodes.iter_mut() {
+        for node in &mut self.nodes {
             if let Some(handle) = node.thread_handle.take() {
                 threads.push(handle);
             }
@@ -88,11 +88,13 @@ impl Network {
             .into_iter()
             .enumerate()
             .map(|(i, options)| {
-                let is_drone = !client.contains(&(i as NodeId));
+                let node_id = NodeId::try_from(i).unwrap();
+
+                let is_drone = !client.contains(&node_id);
                 let mut thread_handle = None;
 
                 if is_drone {
-                    let mut drone: T = options.create_drone(i as NodeId, 0.0);
+                    let mut drone: T = options.create_drone(node_id, 0.0);
 
                     thread_handle = Some(thread::spawn(move || {
                         drone.run();
@@ -107,12 +109,11 @@ impl Network {
             .collect();
 
         Self {
-            nodes,
             sc_event_rcv,
+            nodes,
         }
     }
 
-    #[allow(dead_code)]
     pub fn add_connections(&mut self, start: NodeId, end: NodeId) {
         let options_start = &self.nodes[start as usize].options;
         let options_end = &self.nodes[end as usize].options;
@@ -128,17 +129,17 @@ impl Network {
         );
     }
 
-    #[allow(dead_code)]
     pub fn simulation_controller_event_receiver(&self) -> Receiver<DroneEvent> {
         self.sc_event_rcv.clone()
     }
 
+    /// # Panics
     pub fn send_as_simulation_controller_to(&self, node_id: NodeId, command: DroneCommand) {
         self.nodes[node_id as usize]
             .options
             .command_send
             .send(command)
-            .unwrap()
+            .unwrap();
     }
 
     pub fn send_as_client(&self, node_id: NodeId, packet: &Packet) -> Option<()> {
@@ -155,10 +156,6 @@ impl Network {
         let receiver = &self.nodes[node_id as usize].options.packet_recv;
         receiver.recv_timeout(timeout).ok()
     }
-    /// Start some drone as fake client
-    /// They only respond to FloodRequest
-    #[allow(dead_code)]
-    fn start_fake_clients_async(&mut self, fake_clients: &[NodeId]) {
-        todo!("{:?}", fake_clients)
-    }
+
+    //TODO fn start_fake_clients_async
 }

@@ -56,10 +56,12 @@ impl DroneOptions {
         )
     }
 
-    pub fn assert_expect_drone_event(&self, expected_event: DroneEvent) {
-        assert_eq!(expected_event, self.event_recv.try_recv().unwrap());
+    /// # Panics
+    pub fn assert_expect_drone_event(&self, expected_event: &DroneEvent) {
+        assert_eq!(Ok(expected_event), self.event_recv.try_recv().as_ref());
     }
 
+    /// # Panics
     pub fn assert_expect_drone_event_fail(&self) {
         assert!(self.event_recv.try_recv().is_err());
     }
