@@ -31,7 +31,7 @@ pub fn listen_response_nodes(network: &Network, timeout: Duration) -> Vec<(NodeI
 
     while let Some(packet) = network.recv_as_client(0, timeout) {
         if let PacketType::FloodResponse(ref flood_res) = packet.pack_type {
-            let path = flood_res.path_trace.iter().cloned().map(|x| x.0);
+            let path = flood_res.path_trace.iter().copied().map(|x| x.0);
             let connection = path.clone().skip(1).zip(path);
 
             connection.for_each(|(a, b)| {

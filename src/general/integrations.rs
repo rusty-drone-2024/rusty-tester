@@ -5,6 +5,7 @@ use wg_2024::controller::DroneCommand;
 use wg_2024::drone::Drone;
 use wg_2024::packet::NackType;
 
+/// # Panics
 pub fn test_drone_packet_1_hop<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(3, &[(0, 1), (1, 2)], &[0, 2]);
 
@@ -17,6 +18,7 @@ pub fn test_drone_packet_1_hop<T: Drone + 'static>(timeout: Duration) {
     assert_eq!(packet, response);
 }
 
+/// # Panics
 pub fn test_drone_packet_3_hop<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(5, &[(0, 1), (1, 2), (2, 3), (3, 4)], &[0, 4]);
 
@@ -29,6 +31,7 @@ pub fn test_drone_packet_3_hop<T: Drone + 'static>(timeout: Duration) {
     assert_eq!(packet, response);
 }
 
+/// # Panics
 pub fn test_drone_packet_3_hop_crash<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(5, &[(0, 1), (1, 2), (2, 3), (3, 4)], &[0, 4]);
 
@@ -42,6 +45,7 @@ pub fn test_drone_packet_3_hop_crash<T: Drone + 'static>(timeout: Duration) {
     assert_eq!(expected, response);
 }
 
+/// # Panics
 pub fn test_drone_packet_255_hop<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(
         256,
@@ -59,6 +63,7 @@ pub fn test_drone_packet_255_hop<T: Drone + 'static>(timeout: Duration) {
     assert_eq!(packet, response);
 }
 
+/// # Panics
 pub fn test_drone_error_in_routing<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(5, &[(0, 1), (1, 2)], &[0, 4]);
 
@@ -70,6 +75,7 @@ pub fn test_drone_error_in_routing<T: Drone + 'static>(timeout: Duration) {
     assert_eq!(expected, response);
 }
 
+/// # Panics
 pub fn test_drone_destination_is_drone<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(4, &[(0, 1), (1, 2), (2, 3)], &[0, 3]);
 

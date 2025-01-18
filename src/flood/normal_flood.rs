@@ -5,6 +5,7 @@ use std::time::Duration;
 use wg_2024::drone::Drone;
 use wg_2024::packet::NodeType;
 
+/// # Panics
 pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(4, &[(0, 1), (1, 2), (1, 3)], &[0, 2, 3]);
 
