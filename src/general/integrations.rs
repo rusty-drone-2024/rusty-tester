@@ -35,7 +35,7 @@ pub fn test_drone_packet_3_hop<T: Drone + 'static>(timeout: Duration) {
 pub fn test_drone_packet_3_hop_crash<T: Drone + 'static>(timeout: Duration) {
     let net = Network::create_and_run::<T>(5, &[(0, 1), (1, 2), (2, 3), (3, 4)], &[0, 4]);
 
-    net.send_as_simulation_controller_to(1, DroneCommand::Crash);
+    net.send_as_simulation_controller_to(1, DroneCommand::Crash).unwrap();
     let packet = new_test_fragment_packet(&[0, 1, 2, 3, 4], 5);
 
     net.send_as_client(0, &packet).unwrap();

@@ -1,12 +1,13 @@
+mod clean_resources;
+mod operations;
+
 use crate::utils::DroneOptions;
 use crossbeam_channel::{unbounded, Receiver};
 use std::thread;
 use std::thread::JoinHandle;
-use std::time::Duration;
-use wg_2024::controller::{DroneCommand, DroneEvent};
+use wg_2024::controller::DroneEvent;
 use wg_2024::drone::Drone;
 use wg_2024::network::NodeId;
-use wg_2024::packet::Packet;
 
 pub struct Network {
     sc_event_rcv: Receiver<DroneEvent>,
@@ -16,40 +17,6 @@ pub struct Network {
 pub struct NetworkDrone {
     thread_handle: Option<JoinHandle<()>>,
     options: DroneOptions,
-}
-
-impl Drop for Network {
-    fn drop(&mut self) {
-        let mut threads = vec![];
-
-        for node in &mut self.nodes {
-            if let Some(handle) = node.thread_handle.take() {
-                threads.push(handle);
-            }
-        }
-
-        self.nodes.clear();
-
-        for t in threads {
-            let _ = t.join();
-        }
-    }
-}
-
-impl Drop for NetworkDrone {
-    fn drop(&mut self) {
-        for neighbour in self.options.packet_send.keys() {
-            let res = self
-                .options
-                .command_send
-                .send(DroneCommand::RemoveSender(*neighbour));
-            if res.is_err() {
-                return;
-            }
-        }
-
-        let _ = self.options.command_send.send(DroneCommand::Crash);
-    }
 }
 
 impl Network {
@@ -114,48 +81,7 @@ impl Network {
         }
     }
 
-    pub fn add_connections(&mut self, start: NodeId, end: NodeId) {
-        let options_start = &self.nodes[start as usize].options;
-        let options_end = &self.nodes[end as usize].options;
-
-        self.send_as_simulation_controller_to(
-            start,
-            DroneCommand::AddSender(end, options_end.packet_drone_in.clone()),
-        );
-
-        self.send_as_simulation_controller_to(
-            end,
-            DroneCommand::AddSender(start, options_start.packet_drone_in.clone()),
-        );
-    }
-
-    pub fn simulation_controller_event_receiver(&self) -> Receiver<DroneEvent> {
-        self.sc_event_rcv.clone()
-    }
-
-    /// # Panics
-    pub fn send_as_simulation_controller_to(&self, node_id: NodeId, command: DroneCommand) {
-        self.nodes[node_id as usize]
-            .options
-            .command_send
-            .send(command)
-            .unwrap();
-    }
-
-    pub fn send_as_client(&self, node_id: NodeId, packet: &Packet) -> Option<()> {
-        let to = packet.routing_header.current_hop();
-        self.send_to_dest_as_client(node_id, to?, packet)
-    }
-
-    pub fn send_to_dest_as_client(&self, from: NodeId, to: NodeId, packet: &Packet) -> Option<()> {
-        let neighbour = self.nodes[from as usize].options.packet_send.get(&to);
-        neighbour?.send(packet.clone()).ok()
-    }
-
-    pub fn recv_as_client(&self, node_id: NodeId, timeout: Duration) -> Option<Packet> {
-        let receiver = &self.nodes[node_id as usize].options.packet_recv;
-        receiver.recv_timeout(timeout).ok()
-    }
+    
 
     //TODO fn start_fake_clients_async
 }
