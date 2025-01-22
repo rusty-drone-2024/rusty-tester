@@ -1,37 +1,33 @@
-use crate::utils::network_initializer::NetworkDrone;
+use crate::utils::network_initializer::node::NodeType::Leaf;
+use crate::utils::network_initializer::Node;
 use crate::utils::Network;
 use wg_2024::controller::DroneCommand;
 
 impl Drop for Network {
     fn drop(&mut self) {
-        let mut threads = vec![];
-
-        for node in &mut self.nodes {
-            if let Some(handle) = node.thread_handle.take() {
-                threads.push(handle);
-            }
+        // Clear so that it run the drop of node
+        for (_, node) in self.nodes.drain() {
+            drop(node);
         }
 
-        self.nodes.clear();
-
-        for t in threads {
-            let _ = t.join();
+        for t in self.threads.drain(..) {
+            t.join().ok();
         }
     }
 }
 
-impl Drop for NetworkDrone {
+impl Drop for Node {
     fn drop(&mut self) {
-        for neighbour in self.options.packet_send.keys() {
-            let res = self
-                .options
-                .command_send
-                .send(DroneCommand::RemoveSender(*neighbour));
-            if res.is_err() {
-                return;
-            }
+        if let Leaf(_) = self.node_type {
+            return;
         }
 
-        let _ = self.options.command_send.send(DroneCommand::Crash);
+        for neighbour in &self.neighbours {
+            let _ = self
+                .command_send
+                .send(DroneCommand::RemoveSender(*neighbour));
+        }
+
+        let _ = self.command_send.send(DroneCommand::Crash);
     }
 }

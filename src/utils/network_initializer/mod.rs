@@ -1,87 +1,49 @@
 mod clean_resources;
+mod conn_converter;
+pub mod node;
 mod operations;
 
-use crate::utils::DroneOptions;
-use crossbeam_channel::{unbounded, Receiver};
-use std::thread;
+use crate::utils::network_initializer::conn_converter::convert_connection;
+use crate::utils::Node;
+use std::collections::{HashMap, HashSet};
 use std::thread::JoinHandle;
-use wg_2024::controller::DroneEvent;
 use wg_2024::drone::Drone;
 use wg_2024::network::NodeId;
 
 pub struct Network {
-    sc_event_rcv: Receiver<DroneEvent>,
-    nodes: Vec<NetworkDrone>,
-}
-
-pub struct NetworkDrone {
-    thread_handle: Option<JoinHandle<()>>,
-    options: DroneOptions,
+    threads: Vec<JoinHandle<()>>,
+    nodes: HashMap<NodeId, Node>,
 }
 
 impl Network {
-    pub fn create_and_run<T: Drone + 'static>(
-        amount: usize,
-        connections: &[(NodeId, NodeId)],
-        client: &[NodeId],
-    ) -> Self {
-        Network::new::<T>(amount, connections, client)
-    }
-
     /// Create vector of drone with ID from 0 to amount
     /// With the given connections
-    /// Duplicated connection are ignored and the graph is not directional
-    fn new<T: Drone + 'static>(
-        amount: usize,
+    /// Duplicated connection are ignored and the graph is not directed
+    ///
+    /// It also run the given network
+    /// # panic
+    /// If the given network is invalid in some way.
+    pub fn create_and_run<T: Drone + 'static>(
+        amount: u8,
         connections: &[(NodeId, NodeId)],
-        client: &[NodeId],
+        clients: &[NodeId],
     ) -> Self {
-        let (sc_event_send, sc_event_rcv) = unbounded::<DroneEvent>();
-        let mut options = (0..amount)
-            .map(|_| DroneOptions::new_with_sc(sc_event_send.clone(), sc_event_rcv.clone()))
-            .collect::<Vec<_>>();
+        let clients = clients.iter().copied().collect::<HashSet<_>>();
+        let connections = convert_connection(amount, connections);
 
-        for (start, end) in connections {
-            let start_input = options[*start as usize].packet_drone_in.clone();
-            let end_input = options[*end as usize].packet_drone_in.clone();
+        let mut nodes = HashMap::default();
+        let mut threads = vec![];
 
-            options[*start as usize].packet_send.insert(*end, end_input);
-            options[*end as usize]
-                .packet_send
-                .insert(*start, start_input);
+        for (id, conn) in connections {
+            if clients.contains(&id) {
+                nodes.insert(id, Node::create_leaf(conn));
+            } else {
+                let (node, join) = Node::create_drone::<T>(id, conn, 0.0);
+                nodes.insert(id, node);
+                threads.push(join);
+            }
         }
 
-        let nodes = options
-            .into_iter()
-            .enumerate()
-            .map(|(i, options)| {
-                let node_id = NodeId::try_from(i).unwrap();
-
-                let is_drone = !client.contains(&node_id);
-                let mut thread_handle = None;
-
-                if is_drone {
-                    let mut drone: T = options.create_drone(node_id, 0.0);
-
-                    thread_handle = Some(thread::spawn(move || {
-                        drone.run();
-                    }));
-                };
-
-                NetworkDrone {
-                    thread_handle,
-                    options,
-                }
-            })
-            .collect();
-
-        Self {
-            sc_event_rcv,
-            nodes,
-        }
+        Self { threads, nodes }
     }
-
-    
-
-    //TODO fn start_fake_clients_async
 }
