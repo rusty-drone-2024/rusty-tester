@@ -12,7 +12,7 @@ use wg_2024::packet::PacketType;
 /// assuming the topology as a client at 0
 /// Connected with a drone 1
 pub fn assert_topology_of_drones<T: Drone + 'static>(
-    amount: usize,
+    amount: u8,
     topology: &[(NodeId, NodeId)],
     timeout: Duration,
 ) {
