@@ -56,7 +56,7 @@ impl Network {
     }
 
     pub fn send_to_dest_as_client(&self, from: NodeId, to: NodeId, packet: &Packet) -> Option<()> {
-        if self.get(from)?.neighbours.contains(&to) {
+        if !self.get(from)?.neighbours.contains(&to) {
             return None; // Not connected
         }
 
