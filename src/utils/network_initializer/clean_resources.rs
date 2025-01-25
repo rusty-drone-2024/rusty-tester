@@ -1,4 +1,4 @@
-use crate::utils::network_initializer::node::NodeType::Leaf;
+use crate::utils::network_initializer::node::NodeType;
 use crate::utils::network_initializer::Node;
 use crate::utils::Network;
 use wg_2024::controller::DroneCommand;
@@ -18,16 +18,16 @@ impl Drop for Network {
 
 impl Drop for Node {
     fn drop(&mut self) {
-        if let Leaf(_) = self.node_type {
+        let NodeType::Drone(drone) = &self.node_type else {
             return;
-        }
+        };
 
         for neighbour in &self.neighbours {
-            let _ = self
+            let _ = drone
                 .command_send
                 .send(DroneCommand::RemoveSender(*neighbour));
         }
 
-        let _ = self.command_send.send(DroneCommand::Crash);
+        let _ = drone.command_send.send(DroneCommand::Crash);
     }
 }

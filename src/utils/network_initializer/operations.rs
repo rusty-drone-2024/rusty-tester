@@ -1,4 +1,5 @@
-use crate::utils::network_initializer::node::NodeType::Leaf;
+use crate::utils::network_initializer::node::NodeType::LeafEdge;
+use crate::utils::network_initializer::node::{DroneData, NodeType};
 use crate::utils::network_initializer::Node;
 use crate::utils::Network;
 use crossbeam_channel::Receiver;
@@ -12,16 +13,24 @@ impl Network {
         self.nodes.get(&id)
     }
 
-    pub fn crash_node(&mut self, id: NodeId) -> Option<()> {
-        let node = self.get(id)?;
+    fn get_drone(&self, id: NodeId) -> Option<&DroneData> {
+        let NodeType::Drone(drone) = &self.get(id)?.node_type else {
+            return None;
+        };
+        Some(drone)
+    }
 
-        for neighbour in &node.neighbours {
-            self.get(*neighbour)?
+    pub fn crash_node(&mut self, id: NodeId) -> Option<()> {
+        let node_drone = self.get(id)?;
+        let drone = self.get_drone(id)?;
+
+        for neighbour in &node_drone.neighbours {
+            self.get_drone(*neighbour)?
                 .command_send
                 .send(DroneCommand::RemoveSender(id))
                 .ok()?;
         }
-        node.command_send.send(DroneCommand::Crash).ok()
+        drone.command_send.send(DroneCommand::Crash).ok()
     }
 
     pub fn add_connections(&mut self, start: NodeId, end: NodeId) -> Option<()> {
@@ -39,7 +48,7 @@ impl Network {
         &self,
         node_id: NodeId,
     ) -> Option<Receiver<DroneEvent>> {
-        Some(self.get(node_id)?.event_recv.clone())
+        Some(self.get_drone(node_id)?.event_recv.clone())
     }
 
     pub fn send_as_simulation_controller_to(
@@ -47,7 +56,7 @@ impl Network {
         node_id: NodeId,
         command: DroneCommand,
     ) -> Option<()> {
-        self.get(node_id)?.command_send.send(command).ok()
+        self.get_drone(node_id)?.command_send.send(command).ok()
     }
 
     pub fn send_as_client(&self, node_id: NodeId, packet: &Packet) -> Option<()> {
@@ -64,10 +73,23 @@ impl Network {
         next_hop.packet_insert.send(packet.clone()).ok()
     }
 
+    #[cfg(not(feature = "leaf"))]
     pub fn recv_as_client(&self, node_id: NodeId, timeout: Duration) -> Option<Packet> {
-        let Leaf(packet_remove) = &self.get(node_id)?.node_type else {
+        let LeafEdge(packet_remove) = &self.get(node_id)?.node_type else {
             return None;
         };
         packet_remove.recv_timeout(timeout).ok()
+    }
+
+    #[cfg(feature = "leaf")]
+    pub fn recv_as_client(&self, node_id: NodeId, timeout: Duration) -> Option<Packet> {
+        let LeafEdge(data) = &self.get(node_id)?.node_type else {
+            return None;
+        };
+        data.data_to_run
+            .as_ref()?
+            .packet_remove
+            .recv_timeout(timeout)
+            .ok()
     }
 }
