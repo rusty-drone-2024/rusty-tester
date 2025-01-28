@@ -19,15 +19,18 @@ pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
     let received2 = net.recv_as_client(3, timeout).unwrap();
     assert_eq!(expected.pack_type, received1.pack_type);
     assert_eq!(expected.pack_type, received2.pack_type);
-    
+
     let sc_receiver = net.simulation_controller_event_receiver(1).unwrap();
-    for i in 1..=2{
-        let Ok(PacketSent(packet)) = sc_receiver.recv_timeout(timeout) else{
+    for i in 1..=2 {
+        let Ok(PacketSent(packet)) = sc_receiver.recv_timeout(timeout) else {
             panic!("Didn't receive event PacketSent (the {i} th time)")
         };
         assert_eq!(expected.pack_type, packet.pack_type);
     }
-    assert!(sc_receiver.recv_timeout(timeout).is_err(), "Found extra flood");
+    assert!(
+        sc_receiver.recv_timeout(timeout).is_err(),
+        "Found extra flood"
+    );
 }
 
 pub fn test_loop_flood<T: Drone + 'static>(timeout: Duration) {
