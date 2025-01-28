@@ -38,7 +38,7 @@ pub fn new_flood_request(
     include_itself: bool,
 ) -> Packet {
     Packet::new_flood_request(
-        SourceRoutingHeader::new(vec![initiator_id], 1),
+        SourceRoutingHeader::empty_route(),
         session_id,
         FloodRequest {
             flood_id,

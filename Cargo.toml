@@ -4,4 +4,8 @@ edition = "2021"
 
 [dependencies]
 crossbeam-channel = "0.5.13"
-wg_2024 = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["debug"]}
+wg_2024 = { git = "https://github.com/WGL-2024/WGL_repo_2024.git", features = ["debug"] }
+common_structs = { git = "https://github.com/rusty-drone-2024/common-structs.git", optional = true }
+
+[features]
+leaf = ["common_structs"]
