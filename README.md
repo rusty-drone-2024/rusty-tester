@@ -11,6 +11,7 @@ Create a file with the following content.
 NOTE 1: you need to replace the todo with the type of the drone to be tested.
 NOTE 2: you need to change the timing to fit your drone speed.
 NOTE 3: if they loop forever that means your test does not support safe closing. This mean that your implementation is not safe and your drone thread never end, possibly losing some packets based on your implementations.
+NOTE 4: new test were added please copy again this file.
 ```rust
 #![cfg(test)]
 use rusty_tester::*;
@@ -48,6 +49,16 @@ fn drone_packet_3_hop_crash() {
 #[test]
 fn easiest_flood() {
     test_easiest_flood::<Tested>(FLOOD_TIMEOUT);
+}
+
+#[test]
+fn sequential_flood() {
+    test_sequential_id_flood::<Tested>(FLOOD_TIMEOUT);
+}
+
+#[test]
+fn packet_send_flood() {
+    test_packet_send_flood::<Tested>(FLOOD_TIMEOUT);
 }
 
 #[test]
