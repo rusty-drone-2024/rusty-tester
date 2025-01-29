@@ -39,7 +39,7 @@ pub fn test_packet_send_flood<T: Drone + 'static>(timeout: Duration) {
         };
         assert_eq!(expected.pack_type, packet.pack_type);
     }
-    
+
     assert!(
         sc_receiver.recv_timeout(timeout).is_err(),
         "Found extra flood"
@@ -52,11 +52,17 @@ pub fn test_sequential_id_flood<T: Drone + 'static>(timeout: Duration) {
 
     let flood1 = new_flood_request(5, 7, 0, true);
     net.send_to_dest_as_client(0, 2, &flood1).unwrap();
-    assert!(matches!(net.recv_as_client(1, timeout).unwrap().pack_type, FloodRequest(_)));
-    
+    assert!(matches!(
+        net.recv_as_client(1, timeout).unwrap().pack_type,
+        FloodRequest(_)
+    ));
+
     let flood2 = new_flood_request(5, 7, 1, true);
     net.send_to_dest_as_client(1, 2, &flood2).unwrap();
-    assert!(matches!(net.recv_as_client(0, timeout).unwrap().pack_type, FloodRequest(_)));
+    assert!(matches!(
+        net.recv_as_client(0, timeout).unwrap().pack_type,
+        FloodRequest(_)
+    ));
 }
 
 pub fn test_loop_flood<T: Drone + 'static>(timeout: Duration) {
