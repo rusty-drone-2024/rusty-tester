@@ -5,6 +5,7 @@ use std::time::Duration;
 use wg_2024::controller::DroneEvent::PacketSent;
 use wg_2024::drone::Drone;
 use wg_2024::packet::NodeType;
+use wg_2024::packet::PacketType::FloodRequest;
 
 /// # Panics
 pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
@@ -19,6 +20,17 @@ pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
     let received2 = net.recv_as_client(3, timeout).unwrap();
     assert_eq!(expected.pack_type, received1.pack_type);
     assert_eq!(expected.pack_type, received2.pack_type);
+}
+
+/// # Panics
+pub fn test_packet_send_flood<T: Drone + 'static>(timeout: Duration) {
+    let net = Network::create_and_run::<T>(4, &[(0, 1), (1, 2), (1, 3)], &[0, 2, 3]);
+
+    let flood = new_flood_request(5, 7, 0, true);
+    net.send_to_dest_as_client(0, 1, &flood).unwrap();
+
+    let expected =
+        new_flood_request_with_path(5, 7, 0, &[(0, NodeType::Client), (1, NodeType::Drone)]);
 
     let sc_receiver = net.simulation_controller_event_receiver(1).unwrap();
     for i in 1..=2 {
@@ -27,10 +39,30 @@ pub fn test_easiest_flood<T: Drone + 'static>(timeout: Duration) {
         };
         assert_eq!(expected.pack_type, packet.pack_type);
     }
+
     assert!(
         sc_receiver.recv_timeout(timeout).is_err(),
         "Found extra flood"
     );
+}
+
+/// # Panics
+pub fn test_sequential_id_flood<T: Drone + 'static>(timeout: Duration) {
+    let net = Network::create_and_run::<T>(4, &[(0, 2), (1, 2), (2, 3)], &[0, 1, 3]);
+
+    let flood1 = new_flood_request(5, 7, 0, true);
+    net.send_to_dest_as_client(0, 2, &flood1).unwrap();
+    assert!(matches!(
+        net.recv_as_client(1, timeout).unwrap().pack_type,
+        FloodRequest(_)
+    ));
+
+    let flood2 = new_flood_request(5, 7, 1, true);
+    net.send_to_dest_as_client(1, 2, &flood2).unwrap();
+    assert!(matches!(
+        net.recv_as_client(0, timeout).unwrap().pack_type,
+        FloodRequest(_)
+    ));
 }
 
 pub fn test_loop_flood<T: Drone + 'static>(timeout: Duration) {
